@@ -5,11 +5,12 @@ import {
   effect,
   input,
   model,
+  output,
   viewChild,
   ElementRef,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { LucideChevronRight, LucideX } from '@lucide/angular';
+import { LucideChevronRight, LucideLogOut, LucideX } from '@lucide/angular';
 import { Profile } from '../../core/auth/profile';
 import { UiRole } from '../../core/auth/role.model';
 import { ROLE_NAVIGATION } from '../../core/navigation/nav.config';
@@ -90,6 +91,18 @@ import { IconComponent } from '../../shared/components/icon/icon.component';
           </a>
         }
       </nav>
+
+      <!-- Cerrar sesión (Fase 2, sin diseño en Figma): pie del panel con los tokens del menú. -->
+      <div class="mt-auto shrink-0 border-t border-border p-4">
+        <button
+          type="button"
+          class="flex min-h-12 w-full items-center gap-[14px] rounded-panel px-4 py-3 text-[15px] font-medium leading-[22px] text-ink hover:bg-canvas"
+          (click)="signOut.emit()"
+        >
+          <edu-icon [name]="logoutIcon" [size]="22" class="text-muted" />
+          Cerrar sesión
+        </button>
+      </div>
     </div>
   `,
 })
@@ -98,9 +111,11 @@ export class MobileMenuComponent {
   readonly profile = input.required<Profile>();
   readonly photoUrl = input<string | null>(null);
   readonly open = model<boolean>(false);
+  readonly signOut = output<void>();
 
   protected readonly nav = computed(() => ROLE_NAVIGATION[this.role()]);
   protected readonly closeIcon = LucideX;
+  protected readonly logoutIcon = LucideLogOut;
   protected readonly chevronIcon = LucideChevronRight;
   private readonly closeButton = viewChild<ElementRef<HTMLButtonElement>>('closeButton');
 
