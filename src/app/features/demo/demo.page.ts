@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   LucideCertificate,
   LucideFileText,
@@ -8,8 +7,7 @@ import {
   LucideSun,
   LucideUserRoundCheck,
 } from '@lucide/angular';
-import { UI_ROLES, UI_ROLE_LABEL, isUiRole } from '../../core/auth/role.model';
-import { DEMO_USERS } from '../../core/mock/fixtures/users.fixture';
+import { SessionStore } from '../../core/auth/session.store';
 import { BadgeComponent } from '../../shared/components/badge/badge.component';
 import { ButtonComponent } from '../../shared/components/button/button.component';
 import { IconComponent } from '../../shared/components/icon/icon.component';
@@ -29,7 +27,6 @@ import { greetingFor, longDayLabel } from '../../shared/utils/date-format';
 @Component({
   selector: 'edu-demo-page',
   imports: [
-    RouterLink,
     BadgeComponent,
     ButtonComponent,
     IconComponent,
@@ -88,27 +85,12 @@ import { greetingFor, longDayLabel } from '../../shared/utils/date-format';
         </edu-section-card>
       </div>
 
-      <edu-section-card title="Layout por rol" subtitle="Abre el shell de cada rol (sidebar en escritorio, menú en móvil)">
-        <div class="flex flex-wrap gap-2">
-          @for (role of roles; track role) {
-            <a
-              [routerLink]="['/', role, 'inicio']"
-              class="rounded-button border border-border px-[18px] py-[10px] text-[14px] font-semibold text-ink hover:bg-canvas"
-              >{{ roleLabel[role] }}</a
-            >
-          }
-        </div>
-      </edu-section-card>
     </div>
   `,
 })
 export class DemoPage {
   protected readonly toast = inject(ToastService);
-  protected readonly roles = UI_ROLES;
-  protected readonly roleLabel = UI_ROLE_LABEL;
-
-  private readonly roleData: unknown = inject(ActivatedRoute).snapshot.parent?.data['role'];
-  protected readonly firstName = isUiRole(this.roleData) ? DEMO_USERS[this.roleData].first_name : 'Alumno';
+  protected readonly firstName = inject(SessionStore).user()?.first_name ?? '';
 
   private readonly now = new Date();
   protected readonly greeting = greetingFor(this.now);

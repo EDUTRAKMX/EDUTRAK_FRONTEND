@@ -13,8 +13,9 @@ npx ng build -c demo        # build de demostración explícito con datos mock
 npm test                    # ng test (Vitest + jsdom; pruebas existentes)
 ```
 
-Rutas disponibles (Fase 1): `/` → `/alumno/inicio`; `/{alumno|profesor|tutor|director}/inicio` (demo temporal) y el resto de
-destinos del menú de cada rol (marcador "Pantalla pendiente"). Rutas desconocidas → `/alumno/inicio`.
+Rutas disponibles: `/login`, `/cambiar-contrasena`, `/acceso-denegado` y, tras iniciar sesión, `/{alumno|profesor|tutor|director}/inicio`
+(demo temporal) y el resto de destinos del menú de cada rol (marcador "Pantalla pendiente"). `/` y rutas desconocidas → destino según la sesión
+(o `/login`). Cuentas de prueba: ver [MOCK_DATA_ARCHITECTURE.md](./MOCK_DATA_ARCHITECTURE.md#cuentas-ficticias-de-demostración).
 
 ## Fase 1 — Fundamentos · ☑ completada (con limitaciones)
 
@@ -87,4 +88,49 @@ del canvas), no exportaciones 1:1 de Figma; la comparación pixel a pixel se hiz
 8. Playwright ya funciona con `chromium-1255` (el instalador terminó en segundo plano). Quedan `chromium-1243` y `chromium_headless_shell-1243` sin usar en `%LOCALAPPDATA%\ms-playwright` (se pueden borrar).
 9. Sin ESLint ni CI (ver plan).
 
-## Fase 2 — Autenticación · ☐  ·  Fase 3 Director · ☐  ·  Fase 4 Profesor · ☐  ·  Fase 5 Tutor · ☐  ·  Fase 6 Alumno · ☐  ·  Fase 7 Revisión · ☐
+## Fase 2 — Autenticación y sesión · ☑ completada (con limitaciones)
+
+Arquitectura, decisiones, rutas/guards y diferencias con el backend: [FRONTEND_IMPLEMENTATION_PLAN.md](./FRONTEND_IMPLEMENTATION_PLAN.md#autenticación-y-sesión-fase-2).
+Cuentas ficticias y comportamiento del mock: [MOCK_DATA_ARCHITECTURE.md](./MOCK_DATA_ARCHITECTURE.md#autenticación-simulada-fase-2).
+Interfaces sin referencia de Figma: [FIGMA_INVENTORY.md](./FIGMA_INVENTORY.md#interfaces-creadas-sin-referencia-directa-de-figma-fase-2).
+
+### Entregado
+- Puerto `AuthApi`/`AUTH_API`, `MockAuthApi`, `AuthService`, `SessionStore` (Signals), persistencia demo, `provideAuth()`, validadores del contrato.
+- Guards: `authGuard`, `roleGuard` (+ versiones `Child`), `guestGuard`, `passwordChangeGuard`, `homeRedirectGuard`. Raíz y `**` ya no apuntan a `/alumno/inicio`.
+- Pantallas: Login, Cambio obligatorio de contraseña, Acceso denegado (+ `AuthLayoutComponent`, `InputFieldComponent`, botón secundario).
+- Layouts: perfil real de la sesión (se eliminó el perfil demo del shell), menú de usuario con "Cerrar sesión" en el topbar y en el menú móvil.
+- Expiración simulada y renovación silenciosa; restauración de sesión demo tras recargar.
+
+### Verificación (Playwright + Chromium 1255, `ng serve`) — 191 comprobaciones, 191 correctas, 0 problemas de consola
+- **Login:** 4 roles → su inicio; saludo y topbar con el usuario de la sesión; campos vacíos; formato inválido; credenciales incorrectas
+  (mensaje genérico, también con cuenta inexistente); 5 fallos → 429 aun con la contraseña correcta; mostrar/ocultar contraseña (`aria-pressed`).
+- **Redirecciones:** sin sesión → `/login` (raíz, ruta protegida con `returnUrl`, ruta desconocida, `/cambiar-contrasena`); `returnUrl` del mismo rol se respeta,
+  de otro rol o externo (`//host`) se ignora; `/login` con sesión → inicio del rol.
+- **Permisos:** cada rol que abre la ruta de otro (`/director/…`, `/alumno/…`) → `/acceso-denegado`, con enlace a su inicio.
+- **Cierre de sesión:** escritorio (menú, Escape y foco de vuelta) y móvil (menú lateral); la ruta vuelve a estar protegida y la recarga no restaura.
+- **Cambio obligatorio:** `22170099` solo ve `/cambiar-contrasena` (incluso con otras URLs y tras recargar); errores de vacío, corta, confirmación,
+  igual a la actual y contraseña actual incorrecta; éxito → inicio + toast; ya no se vuelve a exigir tras recargar.
+- **Expiración:** con reloj simulado, a los 20 min sigue activa (renovación), a los 31 min → `/login?motivo=expirada` con aviso, y la recarga no restaura;
+  el guard detecta una sesión vencida al navegar dentro del shell.
+- **Teclado:** orden número → contraseña → mostrar → enviar; Enter envía; el botón mostrar funciona con Enter; reenvío bloqueado (`disabled` + `aria-busy`).
+- **Recarga:** la sesión demo sobrevive y se restaura; tras cerrar sesión o expirar, no.
+- **Layout:** sin desbordamiento horizontal en 320, 375, 390, 430, 440, 768, 1024, 1440 y 1920 px en login (vacío, con errores, con cuentas demo),
+  cambio de contraseña (con y sin errores), acceso denegado y los 4 shells (con el menú de usuario abierto en escritorio).
+- **Builds / pruebas:** `ng build` y `ng build -c demo` correctos (inicial 463.23 kB / 91.7 kB). `ng test`: 2/2 (las existentes; no se añadieron pruebas).
+  Build `production` en ejecución: falla al arrancar con el mensaje explícito, sin mock ni login; `demo` muestra el login con las cuentas.
+- Capturas locales: `.design-reference/phase2/` (login, cambio de contraseña y acceso denegado en 1440 y 390; shell con menú de usuario; menú móvil con cierre de sesión).
+
+### Errores encontrados y corregidos durante la verificación
+Contador de intentos del mock que se reiniciaba en cada fallo (nunca llegaba al 429); foco al primer campo inválido aplicado antes de pintar
+`aria-invalid`; **`canActivate` del shell no se reevaluaba al navegar entre pantallas hijas** (una sesión vencida no se detectaba) → `canActivateChild`.
+
+### Limitaciones y pendientes de la Fase 2
+1. Login, cambio de contraseña, acceso denegado, menú de usuario y botón secundario **no tienen diseño en Figma**: requieren revisión de diseño.
+2. Sin recuperación de contraseña, autorregistro ni selector de rol para personas con varios roles (el contrato no cubre los dos primeros).
+3. Sin `HttpAuthApi`, interceptor HTTP ni integración con el backend (a propósito). La ejecución real en producción sigue pendiente.
+4. Los fixtures ficticios (incluidas sus contraseñas de demo) siguen empaquetados en el build de producción aunque inertes.
+5. Campana de notificaciones y perfil completo siguen sin implementar (fuera de alcance).
+6. Sin ESLint ni CI. Las pruebas unitarias de la Fase 2 quedan para Ernesto (lista en MOCK_DATA_ARCHITECTURE.md).
+7. `angular.json` aparecía modificado antes de empezar la fase (el CLI añadió `cli.analytics`); no es parte de la Fase 2 y queda a criterio del equipo.
+
+## Fase 3 Director · ☐  ·  Fase 4 Profesor · ☐  ·  Fase 5 Tutor · ☐  ·  Fase 6 Alumno · ☐  ·  Fase 7 Revisión · ☐

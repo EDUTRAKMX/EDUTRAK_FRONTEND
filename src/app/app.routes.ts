@@ -1,11 +1,20 @@
 import { Routes } from '@angular/router';
+import {
+  authChildGuard,
+  authGuard,
+  guestGuard,
+  homeRedirectGuard,
+  passwordChangeGuard,
+  roleChildGuard,
+  roleGuard,
+} from './core/auth/auth.guards';
 import { UI_ROLES, UiRole } from './core/auth/role.model';
 import { ROLE_NAVIGATION, navPathsFor } from './core/navigation/nav.config';
 
 /**
  * Rutas por rol bajo el shell. Fase 1: `inicio` carga la pantalla temporal de demostración y el
  * resto de destinos del menú carga un marcador. Las fases 3 a 6 sustituyen cada `loadComponent`
- * por la pantalla real. Los guards por rol/sesión llegan en la Fase 2.
+ * por la pantalla real. Fase 2: cada shell exige sesión activa (`authGuard`) y el rol de la ruta (`roleGuard`).
  */
 function roleRoutes(role: UiRole): Routes {
   const { basePath } = ROLE_NAVIGATION[role];
@@ -13,6 +22,8 @@ function roleRoutes(role: UiRole): Routes {
     {
       path: basePath.slice(1),
       data: { role },
+      canActivate: [authGuard, roleGuard],
+      canActivateChild: [authChildGuard, roleChildGuard],
       loadComponent: () => import('./layouts/shell/shell.layout').then((m) => m.ShellLayout),
       children: [
         { path: '', pathMatch: 'full', redirectTo: 'inicio' },
@@ -36,8 +47,26 @@ function roleRoutes(role: UiRole): Routes {
 }
 
 export const routes: Routes = [
-  // Fase 1: sin login todavía; la raíz abre el shell del Alumno. En la Fase 2 redirigirá a /login.
-  { path: '', pathMatch: 'full', redirectTo: 'alumno/inicio' },
+  // La raíz y las rutas desconocidas llevan al inicio del rol de la sesión, o al login si no hay sesión.
+  { path: '', pathMatch: 'full', canActivate: [homeRedirectGuard], children: [] },
+  {
+    path: 'login',
+    title: 'Iniciar sesión · EDUTRAK',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./features/identity/login/login.page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'cambiar-contrasena',
+    title: 'Cambiar contraseña · EDUTRAK',
+    canActivate: [passwordChangeGuard],
+    loadComponent: () =>
+      import('./features/identity/change-password/change-password.page').then((m) => m.ChangePasswordPage),
+  },
+  {
+    path: 'acceso-denegado',
+    title: 'Acceso denegado · EDUTRAK',
+    loadComponent: () => import('./features/identity/access-denied/access-denied.page').then((m) => m.AccessDeniedPage),
+  },
   ...UI_ROLES.flatMap(roleRoutes),
-  { path: '**', redirectTo: 'alumno/inicio' },
+  { path: '**', canActivate: [homeRedirectGuard], children: [] },
 ];

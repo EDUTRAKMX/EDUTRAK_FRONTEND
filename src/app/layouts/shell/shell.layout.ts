@@ -2,12 +2,11 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, signal } f
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
-import { APP_ENV } from '../../core/config/app-config';
+import { AuthService } from '../../core/auth/auth.service';
 import { Profile, buildProfile } from '../../core/auth/profile';
 import { UiRole, isUiRole } from '../../core/auth/role.model';
 import { SessionStore } from '../../core/auth/session.store';
 import { TERM_REPOSITORY } from '../../core/data/term.repository';
-import { DEMO_USERS } from '../../core/mock/fixtures/users.fixture';
 import { MobileHeaderComponent } from './mobile-header.component';
 import { MobileMenuComponent } from './mobile-menu.component';
 import { SidebarComponent } from './sidebar.component';
@@ -41,6 +40,7 @@ const PLACEHOLDER_PHOTO = '/images/avatar-placeholder.jpg';
           [photoUrl]="desktopPhoto()"
           [collapsed]="collapsed()"
           (toggleSidebar)="collapsed.set(!collapsed())"
+          (signOut)="auth.signOut()"
         />
         <edu-mobile-header
           class="sticky top-0 z-30 lg:hidden"
@@ -53,7 +53,7 @@ const PLACEHOLDER_PHOTO = '/images/avatar-placeholder.jpg';
         </main>
       </div>
     </div>
-    <edu-mobile-menu [role]="uiRole()" [profile]="profile()" [photoUrl]="photo" [(open)]="menuOpen" />
+    <edu-mobile-menu [role]="uiRole()" [profile]="profile()" [photoUrl]="photo" [(open)]="menuOpen" (signOut)="auth.signOut()" />
   `,
 })
 export class ShellLayout {
@@ -61,7 +61,7 @@ export class ShellLayout {
   readonly role = input<string>('alumno');
 
   private readonly session = inject(SessionStore);
-  private readonly env = inject(APP_ENV);
+  protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly terms = inject(TERM_REPOSITORY);
 
@@ -74,10 +74,10 @@ export class ShellLayout {
     return isUiRole(value) ? value : 'alumno';
   });
 
-  /** Sesión real si existe; si no, persona de demostración (solo con mockAuth activo). */
+  /** Perfil de la sesión autenticada (los guards garantizan que existe al entrar en el shell). */
   protected readonly profile = computed<Profile>(() => {
     const role = this.uiRole();
-    const user = this.session.user() ?? (this.env.mockAuth ? DEMO_USERS[role] : null);
+    const user = this.session.user();
     return user ? buildProfile(user, role) : { fullName: '', roleLabel: '', initials: '?' };
   });
 

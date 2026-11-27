@@ -127,12 +127,32 @@ píldora de periodo `rgba(32,138,99,.12)` / `#208a63`. Tipografía: **Inter** (3
 
 | Funcionalidad | Diseño | Contrato backend | Decisión |
 |---|---|---|---|
-| Login | ✘ | `POST /api/auth/login` | Construir con el sistema visual (Fase 2) |
-| Cambio obligatorio de contraseña | ✘ | `PATCH /api/auth/password` | Contemplar (Fase 2) |
-| Acceso denegado (403/404) | ✘ | códigos 403/404 | Contemplar (Fase 2) |
+| Login | ✘ | `POST /api/auth/login` | **Hecho en la Fase 2** con el sistema visual |
+| Cambio obligatorio de contraseña | ✘ | `PATCH /api/auth/password` | **Hecho en la Fase 2** |
+| Acceso denegado (403/404) | ✘ | códigos 403/404 | **Hecho en la Fase 2** (solo 403 por rol / sin interfaz) |
 | Interfaz de Administrador | ✘ | `/api/admin/users…` | **Pospuesta**, soporte de rol conservado |
 | Asistencia NFC | ✔ (mobile) | ✘ (no hay endpoint) | Simulación identificada |
 | Auditoría / Analytics / Alertas / Asignaciones de tutores del Director | ítems de sidebar sin frame | Alertas/analytics sí; auditoría **no** | Registrar al llegar a la Fase 3 |
 | Estado colapsado del sidebar | ✘ (no consultado) | — | Provisorio, verificar con Figma |
 | Panel de notificaciones (campana) | ✘ | ✘ | Sin comportamiento hasta tener diseño |
-| Menú de usuario / cerrar sesión (chevron del perfil) | ✘ | `POST /api/auth/logout` | Fase 2 |
+| Menú de usuario / cerrar sesión (chevron del perfil) | ✘ | `POST /api/auth/logout` | **Hecho en la Fase 2** (escritorio: desplegable; móvil: pie del menú) |
+
+
+## Interfaces creadas SIN referencia directa de Figma (Fase 2)
+
+Figma no contiene ninguna pantalla de autenticación ni menú de usuario (confirmado en la Fase 0 y por Chrome). Se diseñaron con los
+tokens, tipografía (Inter), iconos Lucide, radios y sombras existentes, sin rediseñar ninguna pantalla de los cuatro roles.
+Capturas locales en `.design-reference/phase2/` (ignorada por Git).
+
+| Interfaz | Archivo | Qué se reutilizó de Figma | Qué es nuevo |
+|---|---|---|---|
+| Marco de autenticación | `layouts/auth/auth-layout.component.ts` | Logotipo del sidebar (cuadro `secondary` + "EDUTRAK" + institución), colores `success-bg`/`primary`/`ink` | Composición: panel de marca (≥1024 px) + tarjeta de formulario; en móvil solo la tarjeta |
+| Login | `features/identity/login/` | Tarjeta (radio 20, borde, `shadow-card`), botón primario 134:5627, avisos con pares `info`/`danger` | Campos, avisos, panel plegable de cuentas demo |
+| Cambio de contraseña | `features/identity/change-password/` | Ídem | Tres campos, textos de ayuda |
+| Acceso denegado | `features/identity/access-denied/` | Ídem + par `danger` | Icono `shield-alert` en círculo |
+| Campo de formulario | `shared/components/form/input-field.component.ts` | Radio 8, borde `border`, texto `ink`/`muted` | Alto 44 px, icono inicial, mostrar/ocultar contraseña, estados de error |
+| Botón secundario | `shared/components/button/` (`variant="secondary"`) | Mismas métricas del botón primario | Fondo `surface` + borde `border`. **Revisar al llegar a los modales (Fase 3)** |
+| Menú de usuario (escritorio) | `layouts/shell/topbar.component.ts` | Bloque de perfil del topbar 134:5649 (intacto), `shadow-card-lg`, radio 12 | Desplegable con nombre, rol y "Cerrar sesión" |
+| Cerrar sesión (móvil) | `layouts/shell/mobile-menu.component.ts` | Ítems de 56 px y tokens del menú 225:5196 | Pie del panel con una acción |
+
+Decisiones sujetas a revisión por diseño: panel de marca del login, textos de apoyo, botón secundario y ubicación de "Cerrar sesión".
