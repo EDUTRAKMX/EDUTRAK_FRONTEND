@@ -36,6 +36,22 @@ Pantalla / componente  ──inyecta──▶  InjectionToken<Repositorio>     (
 
 El topbar muestra "Sep–Dic 2026 · Activo" leyendo `TERM_REPOSITORY.getActive()`.
 
+## Datos académicos del módulo Director (Fase 3)
+
+```
+Pantallas / servicios de feature ──inyectan──▶ tokens de repositorio (core/data)
+   TERM · GROUP · SCHEDULE · CATALOG · DIRECTORY · ANALYTICS
+        │ provideDataSources(): lazyRepository(() => import(mock))   (chunk diferido)
+        ▼
+   Mock*Repository (core/mock)  ──leen/escriben──▶  MockDatabase (en memoria)  ◀── buildSeed() (academic.seed.ts)
+```
+
+- **Una sola fuente** para todos los roles: `academic.seed.ts` genera con PRNG determinista 4 periodos (cerrado, cerrado, **activo**, planeado), 20 grupos (12 en el activo; `8A` sin tutor), ~325 alumnos activos (más 7 sin grupo, incluida la cuenta `22170099`), 5 tutores y ~18 docentes (la cuenta demo de cada rol está dentro), 66 materias de currículo (nivel 5 con los nombres de Figma), ~120 asignaciones docentes, ~160 franjas **sin choques de grupo ni de docente**, hechos por alumno×materia (2 calificaciones de 3 unidades; asistencia de las últimas 4 semanas y las 4 previas) y alertas persistidas derivadas con las reglas del backend (`GRADE_NA_UNIT`, `UNJUSTIFIED_ABSENCES`, `ATTENDANCE_DROP`; `PENDING_JUSTIFICATIONS` sin datos todavía). IDs fijos por entidad para que lo usen Profesor, Tutor y Alumno.
+- **Cálculos** (`analytics-calc.ts`, `shared/utils/attendance.ts`): categorías NA < 80 / SA / DE / AU = 100; asistencia ajustada por justificantes `(P+R)/(P+R+F)`, sin denominador → `null`; sumas de numeradores y denominadores (nunca promedio de porcentajes). Promedio y variaciones: solo mock (`UncontractedIndicators`).
+- **Operaciones simuladas** (errores con los códigos del backend vía `ApiError`): crear periodo (`term_name_taken`, `invalid_dates`), activar/cerrar (`invalid_term_transition`), crear grupo (`group_code_taken`, `term_closed`, `career_inactive`, `invalid_tutor`, `invalid_level`; código en mayúsculas), asignar/quitar tutor, inscribir alumno (`already_enrolled`, `invalid_student`), crear asignación docente (`teaching_assignment_exists`, `subject_not_in_curriculum`, `invalid_teacher`), añadir franja (`schedule_overlap`, `invalid_time_range`, `invalid_day_of_week`). Todas actualizan `MockDatabase` y se reflejan en Inicio, Grupos, Detalle y Horarios.
+- **Solo mock (sin endpoint):** `DirectoryRepository` (listado de tutores/profesores/alumnos) y `uncontractedIndicators`.
+- **Cómo conectar el backend:** implementar cada `Http*Repository` y sustituir el `throw` de `mock()` en `provideDataSources`; las pantallas no cambian. Recargar el navegador reinicia los datos (no hay persistencia).
+
 ## Plan de crecimiento (fases 3–6)
 
 Se añadirán, siguiendo el mismo patrón, fixtures y repositorios para: alumnos, profesores, tutores, grupos, materias,
@@ -113,3 +129,18 @@ Componentes: `StatCardComponent`, `BadgeComponent`, `SidebarComponent` (activo/c
 | `core/mock/mock-auth.api.ts` | 401 idéntico, 429 tras 5 fallos y desbloqueo a los 30 s, refresh de un solo uso, tope de 30 min, `restore` sin conceder roles |
 | `features/identity/*` | `LoginPage` (validaciones, no duplicar envíos, mensajes por error, foco), `ChangePasswordPage` (mapeo de 401/422), `AccessDeniedPage` (variantes de `motivo`), `InputFieldComponent` (aria-*, mostrar/ocultar) |
 | `layouts/shell` | `TopbarComponent` (abrir/Escape/clic fuera/emitir `signOut`), `MobileMenuComponent` (emitir `signOut`) |
+
+**Fase 3 — para la suite de Ernesto** (no se escribieron pruebas; verificado con Playwright, ver FRONTEND_PROGRESS.md):
+
+| Pieza | Qué conviene probar |
+|---|---|
+| `features/director/home/dashboard.vm.ts` | `buildDashboard`: periodo anterior y delta de grupos, alumnos con alertas distintos, alertas por regla, ordenación de grupos, sin periodo activo |
+| `features/director/groups/groups.vm.ts` | `sectionOf` ("5A"→"A", "10"→""), `buildGroupCards`, `matchesGroupQuery` |
+| `features/director/periods/term-utils.ts`, `shared/utils/date-utils.ts` | `termNameFromRange` (mismo año / cruce de año), `weeksOf`/`inclusiveDays` (103 días → 15 semanas), fechas inválidas |
+| `features/director/schedules/schedule-grid.ts` | `moduleStarts`, `snapToModule`, `validatePlacement` (jornada, descanso, grupo, docente, asignación), `placedMinutes` |
+| `core/mock/*` | cada operación y su código de error; consistencia entre repositorios tras mutar; `analytics-calc` (límites 79.99/80/89.99/90/100) |
+| `core/data/lazy-repository.ts` | primera llamada instancia una sola vez; métodos reenvían el observable |
+| `shared/utils/{loadable,csv,attendance}.ts` | recarga cancela la consulta; escape de CSV; `attendancePct` sin denominador |
+| `shared/components/dialog` | foco inicial, atrapar Tab, Escape, `dismissable=false`, retorno de foco |
+| `action-menu`, `pagination`, `range-calendar`, `segmented`, `stepper` | teclado (flechas/Inicio/Fin/RePág), límites, selección de rango |
+| `features/director/**` (pantallas y diálogos) | validaciones, estados vacío/carga/error, mensajes por código de error, variantes Desktop/Mobile |

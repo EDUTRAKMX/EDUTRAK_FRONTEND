@@ -73,7 +73,7 @@ al resolver `TERM_REPOSITORY` (mensaje explícito).
 | 0 | Análisis, inventario, plan | ☑ |
 | **1** | **Fundamentos** (este documento) | ☑ ver progreso |
 | **2** | **Login (sin diseño en Figma), cambio obligatorio de contraseña, acceso denegado, sesión mock, guards por rol, cierre de sesión, menú de usuario** | ☑ ver progreso |
-| 3 | Director: 11 frames Desktop + 14 mobile; modales y bottom sheets | ☐ |
+| **3** | **Director: Inicio, Periodos, Grupos, Detalle del grupo (Resumen/Alumnos), Horarios; modales y bottom sheets** | ☑ ver progreso |
 | 4 | Profesor: asistencia (QR y NFC simulados, manual), calificaciones, horario, justificantes | ☐ |
 | 5 | Tutor: alumnos, seguimientos, alertas, estadísticas, justificantes | ☐ |
 | 6 | Alumno: inicio, horario, calificaciones, asistencia, justificaciones + modales | ☐ |
@@ -122,6 +122,31 @@ Detalle de la arquitectura mock y cuentas de prueba: [MOCK_DATA_ARCHITECTURE.md]
 
 **Producción:** `mockAuth=false` → `provideAuth()` no registra el mock y la app falla al arrancar con un mensaje explícito hasta que exista
 `HttpAuthApi`. Verificado en ejecución con el build `production` (sin pantalla de login ni cuentas demo).
+
+## Módulo Director (Fase 3)
+
+Detalle de la ejecución: [FRONTEND_PROGRESS.md](./FRONTEND_PROGRESS.md#fase-3--módulo-director--completada-con-limitaciones). Inventario de frames: [FIGMA_INVENTORY.md](./FIGMA_INVENTORY.md#director-director--academic--fase-3-). Datos: [MOCK_DATA_ARCHITECTURE.md](./MOCK_DATA_ARCHITECTURE.md#datos-académicos-del-módulo-director-fase-3).
+
+**Rutas** (hijas del shell `/director`, protegidas por `authGuard`/`roleGuard` y sus versiones `Child`): `inicio`, `periodos`, `grupos`, `grupos/:groupId` (+ `alumnos`; otras pestañas = marcador), `horarios`, `horarios/:groupId`. `analytics`, `alertas`, `asignaciones-tutores` y `auditoria` siguen con el marcador de la Fase 1.
+
+**Componentes reutilizables nuevos** (`shared/components`): `edu-dialog` (modal Desktop / bottom sheet Mobile con foco atrapado, Escape y retorno de foco), `edu-confirm-dialog`, `edu-action-menu` (desplegable / sheet), `edu-select`, `edu-search-input`, `edu-segmented`, `edu-pagination`, `edu-page-header`, `edu-callout`, `edu-field`, `edu-switch`, `edu-stepper`, `edu-range-calendar`, `edu-progress-bar`, `edu-count-pill`; `BreakpointService`; utilidades `loadable`, `date-utils`, `attendance`, `csv`.
+
+**Decisiones técnicas**
+- Datos solo por repositorios (interfaz + `InjectionToken`); las pantallas nunca importan fixtures ni mocks. Los mocks se cargan de forma diferida (`lazyRepository`), fuera del bundle inicial.
+- Una sola `MockDatabase` con semilla determinista; los indicadores se calculan de los mismos hechos (calificaciones y asistencias) en todas las pantallas.
+- Variantes Desktop/Mobile con clases responsive (`lg` = 1024 px) y, cuando el diseño difiere, contenido distinto por breakpoint (no se reduce el modal Desktop).
+- Operaciones simuladas actualizan la base en memoria y se reflejan en las pantallas relacionadas; recargar el navegador reinicia los datos.
+
+**Discrepancias con el backend**
+1. **Varios periodos activos:** el backend lo permite (su prueba lo exige); Figma dice "solo un periodo activo" → regla aplicada solo en la UI.
+2. **Periodos:** sin edición ni eliminación (solo `activate` y `close`, final) → "Editar" deshabilitada.
+3. **Alumnos:** `WITHDRAWN` existe pero **no hay endpoint para dar de baja**; "Baja temporal" (Figma) no existe → no se simula; acción de fila deshabilitada.
+4. **Sin listado de usuarios** (tutores, profesores, alumnos): los selectores usan un directorio solo mock. Requiere endpoint (p. ej. usuarios por rol para DIRECTOR).
+5. **Horarios:** solo se consultan y añaden franjas (sin mover/eliminar); jornada, descansos, "Receso", título/siglas/turno no existen. Choques de grupo/docente, descanso y jornada son reglas de la UI (el backend solo valida solape dentro de la misma asignación).
+6. **Grupos:** "Tutor inicial" es opcional en el backend (Figma lo marca obligatorio); la carrera no se pide (única activa); campos del sheet móvil sin equivalente (Lista de alumnos, Horario, Sección).
+7. **Analytics:** `overview` y `groups/{id}` no están tipados en el OpenAPI (forma tomada del código del backend). El OpenAPI no ofrece conteos de alertas por regla ni por alumno distinto: el Inicio pagina `GET /analytics/alerts` (máx. 200) y agrega en el cliente; promedio de calificaciones y variaciones frente al periodo anterior **no tienen contrato** (`UncontractedIndicators`, solo mock). Títulos de alertas: "Faltas sin justificar" (la regla cuenta ≥ umbral, no "consecutivas").
+8. **Exportación:** "Descargar lista" es un CSV generado en el navegador (no hay endpoint).
+9. **Inscripciones:** el listado de inscripciones por grupo es solo DIRECTOR/tutor del grupo; `justifications` y `tutoring` del overview aún sin datos mock (cero).
 
 ## Decisiones aprobadas para funcionalidades sin diseño/contrato
 
