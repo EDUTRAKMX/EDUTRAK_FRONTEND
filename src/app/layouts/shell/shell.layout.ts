@@ -7,6 +7,7 @@ import { Profile, buildProfile } from '../../core/auth/profile';
 import { UiRole, isUiRole } from '../../core/auth/role.model';
 import { SessionStore } from '../../core/auth/session.store';
 import { TERM_REPOSITORY } from '../../core/data/term.repository';
+import { compactTermName } from '../../shared/utils/date-format';
 import { MobileHeaderComponent } from './mobile-header.component';
 import { MobileMenuComponent } from './mobile-menu.component';
 import { SidebarComponent } from './sidebar.component';
@@ -87,7 +88,7 @@ export class ShellLayout {
   private readonly activeTerm = toSignal(this.terms.getActive(), { initialValue: null });
   protected readonly periodLabel = computed(() => {
     const term = this.activeTerm();
-    return term ? `${term.name} · Activo` : null;
+    return term ? `${compactTermName(term.name)} · Activo` : null;
   });
 
   constructor() {

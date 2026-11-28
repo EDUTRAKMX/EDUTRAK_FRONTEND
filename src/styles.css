@@ -36,7 +36,12 @@
   --color-neutral-bg: #e6ecea;
 
   /* Indicadores */
+  /* Paleta de materias del horario (Figma 83:6588: bloque morado de Administración de Bases de Datos) */
+  --color-purple-bg: #ece8fb;
+  --color-purple-fg: #5b3bb5;
   --color-online: #22c55e;
+  /* Relleno ámbar de las barras de asistencia baja (Figma Director · Inicio 66:3, estimado de la captura) */
+  --color-progress-warning: #e0a82e;
   --color-period-bg: rgb(32 138 99 / 0.12);
   --color-period-fg: #208a63;
 
@@ -51,6 +56,8 @@
   --shadow-card: 0 4px 10px rgb(8 121 93 / 0.08);
   --shadow-card-lg: 0 6px 10px rgb(8 121 93 / 0.08);
   --shadow-drawer: 8px 0 30px rgb(19 33 29 / 0.18);
+  /* Figma "Shadow/xl" (modales y bottom sheets) */
+  --shadow-modal: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
   --shadow-dot: 0 1px 2px rgb(128 128 128 / 0.1);
 
   /* Anchos de referencia de Figma */
