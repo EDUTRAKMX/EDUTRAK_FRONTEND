@@ -10,6 +10,7 @@ import {
 } from './core/auth/auth.guards';
 import { UI_ROLES, UiRole } from './core/auth/role.model';
 import { ROLE_NAVIGATION, navPathsFor } from './core/navigation/nav.config';
+import { DIRECTOR_ROUTES } from './features/director/director.routes';
 
 /**
  * Rutas por rol bajo el shell. Fase 1: `inicio` carga la pantalla temporal de demostración y el
@@ -18,6 +19,9 @@ import { ROLE_NAVIGATION, navPathsFor } from './core/navigation/nav.config';
  */
 function roleRoutes(role: UiRole): Routes {
   const { basePath } = ROLE_NAVIGATION[role];
+  // Rutas reales ya implementadas para el rol (Fase 3: Director); el resto de destinos del menú sigue con marcador.
+  const real: Routes = role === 'director' ? DIRECTOR_ROUTES : [];
+  const realPaths = new Set(real.map((r) => r.path));
   return [
     {
       path: basePath.slice(1),
@@ -27,7 +31,10 @@ function roleRoutes(role: UiRole): Routes {
       loadComponent: () => import('./layouts/shell/shell.layout').then((m) => m.ShellLayout),
       children: [
         { path: '', pathMatch: 'full', redirectTo: 'inicio' },
-        ...navPathsFor(role).map((entry) =>
+        ...real,
+        ...navPathsFor(role)
+          .filter((entry) => !realPaths.has(entry.path))
+          .map((entry) =>
           entry.path === 'inicio'
             ? {
                 path: entry.path,
