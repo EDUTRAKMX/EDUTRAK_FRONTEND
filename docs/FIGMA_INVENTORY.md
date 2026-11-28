@@ -89,24 +89,30 @@ píldora de periodo `rgba(32,138,99,.12)` / `#208a63`. Tipografía: **Inter** (3
 | Status Sheet / Container | — | `41:11360` / `41:11358` | componentes móviles | hoja de estado | ☐ |
 | Menú móvil | — | `225:4739` | shell | navegación | ☑ |
 
-## Director (Director & Academic)
+## Director (Director & Academic) · Fase 3 ☑
 
-| Pantalla | Desktop | Mobile | Ruta propuesta | Interacciones | Estado |
+Los 25 frames del alcance (11 Desktop + 14 Mobile) se consultaron con Chrome y corresponden a los Node IDs originales. No se hallaron frames nuevos del Director. Capturas: `.design-reference/phase3/` (ignorada por Git).
+
+| Pantalla | Desktop | Mobile | Ruta | Estado | Notas / diferencias Desktop ↔ Mobile |
 |---|---|---|---|---|---|
-| Inicio | `66:3` | `183:7804` | `/director/inicio` | indicadores, alertas, tabla de grupos | ◐ (demo temporal) |
-| Periodos académicos | `69:960` | `183:6517` | `/director/periodos` | crear, activar, cerrar | ☐ |
-| Grupos | `72:3849` | `183:6738` | `/director/grupos` | crear, asignar tutor, acciones | ☐ |
-| Horarios | `83:6248` | `183:6975` | `/director/horarios` | consulta/gestión | ☐ |
-| Horario del grupo | `83:6588` | `183:7136` | `/director/horarios/:grupo` | consulta/edición | ☐ |
-| Información del grupo · Resumen | `78:4528` | `183:7164` | `/director/grupos/:id` | pestaña Resumen | ☐ |
-| Información del grupo · Alumnos | `83:5496` | `183:7336` | `/director/grupos/:id/alumnos` | pestaña Alumnos | ☐ |
-| Modal nuevo periodo | `72:886` (587 px) | `183:11926` | modal | formulario | ☐ |
-| Modal nuevo grupo | `83:5148` (587 px) | `183:12006` | modal | formulario | ☐ |
-| Modal asignar tutor | `83:5427` (587 px) | `183:12054` | modal | selector | ☐ |
-| Dropdown actions | `72:3765` (236 px) | `183:12084` (bottom sheet) | menú | acciones de fila | ☐ |
-| Ventana nuevo horario | — | `304:508` | modal móvil | formulario | ☐ |
-| Modal Añadir Clase | — | `325:239` | modal móvil | formulario | ☐ |
-| Menú móvil | — | `225:4956` | shell | navegación | ☑ |
+| Inicio | `66:3` | `183:7804` | `/director/inicio` | ☑ | Desktop: 4 tarjetas + Panorama + Alertas + tabla de grupos. Mobile: "Analítica general", "Promedio General" y alertas (sin tabla) |
+| Periodos académicos | `69:960` | `183:6517` | `/director/periodos` | ☑ | Desktop: tabla + pestañas de estado. Mobile: tarjetas + selector "Periodo" |
+| Grupos | `72:3849` | `183:6738` | `/director/grupos` | ☑ | Cuadrícula de tarjetas; filtros en una o dos filas |
+| Horarios | `83:6248` | `183:6975` | `/director/horarios` | ☑ | Mobile trae filtros Carrera/Turno sin soporte (no se ofrecen) |
+| Horario del grupo | `83:6588` | `183:7136` | `/director/horarios/:groupId` | ☑ | Desktop: editor con calendario. Mobile: lista por día |
+| Información del grupo · Resumen | `78:4528` | `183:7164` | `/director/grupos/:groupId` | ☑ | Mobile sin pestañas; "Hoy" en lugar de chips de primera clase |
+| Información del grupo · Alumnos | `83:5496` | `183:7336` | `/director/grupos/:groupId/alumnos` | ☑ | Mobile: botón "Filtros" en lugar de chips |
+| Modal / bottom sheet nuevo periodo | `72:886` | `183:11926` | diálogo | ☑ | Desktop con calendario de rango; Mobile sin calendario (el sheet trae FIN antes de INICIO: se usa INICIO→FIN) |
+| Modal / bottom sheet nuevo grupo | `83:5148` | `183:12006` | diálogo | ☑ | El sheet móvil trae campos de otro flujo (Lista de alumnos, Horario, Sección): se usan los del modal Desktop |
+| Modal / bottom sheet asignar tutor | `83:5427` | `183:12054` | diálogo | ☑ | — |
+| Dropdown de acciones | `72:3765` (236 px) | `183:12084` (sheet) | menú | ☑ | "Editar" deshabilitada (backend); se añade "Activar periodo" |
+| Ventana nuevo horario | — | `304:508` | diálogo | ◐ | Adaptada al contrato: elige grupo y abre su editor (Título/Siglas/Turno/Organizador no tienen equivalente) |
+| Modal Añadir Clase | — | `325:239` | diálogo | ☑ | Se añade el campo Día; "Receso" no es dato del backend |
+| Menú móvil | — | `225:4956` | shell | ☑ | Fase 1 |
+
+**Interfaces del Director sin referencia directa de Figma (Fase 3):** detalle del periodo ("Ver"), confirmaciones (cerrar/activar periodo), "Inscribir alumno" (el botón existe, no su modal), "Agregar materia" (el botón existe, no su modal), estados vacíos/carga/error, mensajes (toasts), calendario de rango (existe en 72:886; su estado de teclado no).
+
+**Propiedades no inspeccionables desde Chrome / aproximadas:** Dev Mode (CSS generado), valores exactos de la sombra "Shadow/xl" (se usó la sombra xl estándar), alturas de fila y anchos de columna de las tablas (medidos de capturas), color ámbar de la barra de asistencia baja (`#e0a82e`, estimado) y morado de la paleta de materias (`#ece8fb` / `#5b3bb5`, estimado).
 
 ## Tutor (Tutor · Analytics · Alerts · Audit)
 

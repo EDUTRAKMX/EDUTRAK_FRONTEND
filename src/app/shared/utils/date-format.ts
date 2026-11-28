@@ -13,3 +13,8 @@ export function longDayLabel(date: Date): string {
     .replace(',', '');
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/** "Sep - Dic 2026" (nombre del periodo en la API) → "Sep–Dic 2026" (así lo muestra el topbar de Figma). */
+export function compactTermName(name: string): string {
+  return name.replace(/\s-\s/, '–');
+}

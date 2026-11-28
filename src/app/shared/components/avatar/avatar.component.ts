@@ -14,7 +14,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     } @else {
       <span
         class="flex size-full items-center justify-center rounded-full bg-success-bg font-semibold text-success-fg"
-        [style.font-size.px]="fontSize()"
+        [style.font-size.px]="textSize() ?? fontSize()"
         >{{ initials() }}</span
       >
     }
@@ -30,6 +30,8 @@ export class AvatarComponent {
   readonly src = input<string | null>(null);
   readonly size = input<number>(32);
   readonly online = input<boolean>(false);
+  /** Tamaño de texto en px; por defecto la mitad del avatar (una inicial). Para dos iniciales usar ≈ 0.4 × tamaño. */
+  readonly textSize = input<number | null>(null);
 
   protected readonly fontSize = computed(() => Math.round(this.size() / 2));
 }
